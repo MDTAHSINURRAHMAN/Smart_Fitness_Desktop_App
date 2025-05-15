@@ -1,0 +1,26 @@
+[
+    {
+        "date": "2025-05-13",
+        "type": "Lunch",
+        "calories": 600,
+        "protein": 30,
+        "carbs": 70,
+        "fats": 25
+    },
+    {
+        "date": "2025-05-13",
+        "type": "Lunch",
+        "calories": 600,
+        "protein": 6,
+        "carbs": 80,
+        "fats": 20
+    },
+    {
+        "date": "2025-05-14",
+        "type": "Dinner",
+        "calories": 500,
+        "protein": 30,
+        "carbs": 20,
+        "fats": 50
+    }
+]
