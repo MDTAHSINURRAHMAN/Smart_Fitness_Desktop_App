@@ -1,18 +1,14 @@
 """
-GoalScreen Module – Smart Fitness Management System
+GoalScreen – Smart Fitness Management System
 
-This module allows users to:
-- Set a calorie burn goal
-- Track progress using data from logged workouts
-- View a progress bar and percentage toward their goal
-- Reset the goal and workout history upon completion
-- View a weekly calorie burn report
+This module enables users to:
+- Set a fitness goal (calorie burn target)
+- Track progress based on workout logs
+- See progress using a progress bar and percentage
+- Reset data upon goal completion
+- View a weekly summary report of calories burned
 
-Data used:
-- goals.json → Stores the set calorie goal
-- workouts.json → Used to calculate burned calories
-
-Author: [Your Name]
+Author: Jawad Khan
 Date: [YYYY-MM-DD]
 """
 
@@ -23,11 +19,11 @@ import os
 from datetime import datetime, timedelta
 from tkinter.font import nametofont
 
-# File paths
+# File paths for storing goals and workout data
 GOALS_FILE = "data/goals.json"
 WORKOUTS_FILE = "data/workouts.json"
 
-# Ensure both data files exist
+# Ensure the necessary files and folders exist
 os.makedirs("data", exist_ok=True)
 for path in [GOALS_FILE, WORKOUTS_FILE]:
     if not os.path.exists(path):
@@ -36,31 +32,30 @@ for path in [GOALS_FILE, WORKOUTS_FILE]:
 
 class GoalScreen:
     """
-    A GUI screen for setting and tracking a user's fitness goal.
+    Window to allow users to track and manage their fitness goals.
     """
 
     def __init__(self, parent):
         """
-        Initialize the goal tracking window.
-        :param parent: The parent Tkinter window (usually main or Toplevel)
+        Initialize the goal tracker interface.
         """
         self.window = tk.Toplevel(parent)
         self.window.title("Fitness Goal Tracking")
         self.window.geometry("520x360")
         self.window.resizable(False, False)
 
-        # Set global font style
+        # Apply global font for consistency
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family="Helvetica", size=11)
 
-        # === Header ===
+        # --- Header ---
         ttk.Label(
             self.window,
             text="Set & Track Your Calorie Burn Goal",
             font=("Helvetica", 14, "bold")
         ).pack(pady=10)
 
-        # === Goal Entry Section ===
+        # --- Goal Input Area ---
         goal_frame = ttk.Frame(self.window, padding=10)
         goal_frame.pack()
 
@@ -70,16 +65,14 @@ class GoalScreen:
 
         ttk.Button(goal_frame, text="Set Goal", command=self.set_goal).grid(row=1, column=1, sticky="e", pady=10)
 
-        # === Progress Display Section ===
+        # --- Progress Area ---
         progress_frame = ttk.Frame(self.window, padding=10)
         progress_frame.pack()
 
         ttk.Label(progress_frame, text="Progress Toward Goal:", font=("Helvetica", 12)).pack(anchor="w")
 
         self.progress_var = tk.DoubleVar()
-        self.progress_bar = ttk.Progressbar(
-            progress_frame, variable=self.progress_var, length=400, maximum=100
-        )
+        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, length=400, maximum=100)
         self.progress_bar.pack(pady=(5, 10))
 
         self.progress_label = ttk.Label(progress_frame, text="0% completed", font=("Helvetica", 11))
@@ -88,20 +81,20 @@ class GoalScreen:
         ttk.Button(progress_frame, text="Refresh Progress", command=self.update_progress).pack(pady=5)
         ttk.Button(progress_frame, text="View Weekly Report", command=self.show_report).pack(pady=5)
 
-        # Load saved goal and initialize progress
+        # Load previous goal if exists and update progress
         self.load_existing_goal()
         self.update_progress()
 
     def set_goal(self):
         """
-        Save the calorie goal entered by the user to goals.json.
+        Save the calorie goal entered by the user.
         """
         try:
             goal = int(self.goal_entry.get())
             if goal <= 0:
                 raise ValueError
         except ValueError:
-            messagebox.showerror("Invalid", "Enter a valid positive number.")
+            messagebox.showerror("Invalid", "Please enter a valid positive number.")
             return
 
         with open(GOALS_FILE, "w") as f:
@@ -112,7 +105,7 @@ class GoalScreen:
 
     def load_existing_goal(self):
         """
-        Load any previously saved goal and display it in the input field.
+        Load any previously saved goal into the input field.
         """
         with open(GOALS_FILE, "r") as f:
             data = json.load(f)
@@ -123,7 +116,7 @@ class GoalScreen:
 
     def update_progress(self):
         """
-        Calculate the total calories burned and update the progress bar.
+        Update the progress bar based on calories burned from workouts.
         """
         with open(GOALS_FILE, "r") as f:
             goal_data = json.load(f)
@@ -138,18 +131,17 @@ class GoalScreen:
         self.progress_bar.configure(value=progress)
         self.progress_label.config(text=f"{int(progress)}% completed ({total_burned} of {goal} cal)")
 
-        # 🎯 Check if goal is fully completed
         if progress >= 100:
             response = messagebox.askyesno(
                 "Goal Completed",
-                "🎉 Congratulations! You've reached your goal!\n\nDo you want to set a new goal and reset your progress?"
+                "🎉 You've reached your goal!\n\nWould you like to reset and start fresh?"
             )
             if response:
                 self.reset_progress_and_goal()
 
     def reset_progress_and_goal(self):
         """
-        Clears workout history and resets UI elements.
+        Clear the workout history and goal input to restart tracking.
         """
         with open(WORKOUTS_FILE, "w") as f:
             json.dump([], f)
@@ -160,11 +152,11 @@ class GoalScreen:
         self.progress_label.config(text="0% completed")
         self.window.after(100, lambda: self.goal_entry.focus())
 
-        messagebox.showinfo("Reset", "Workout history cleared. Enter a new goal to start again.")
+        messagebox.showinfo("Reset", "Workout history cleared. Please enter a new goal to begin again.")
 
     def show_report(self):
         """
-        Display a summary of calories burned in the past 7 days.
+        Show a summary of calories burned for the past 7 days.
         """
         try:
             with open(WORKOUTS_FILE, "r") as f:
@@ -181,11 +173,11 @@ class GoalScreen:
             if date in daily_summary:
                 daily_summary[date] += w.get("calories", 0)
 
-        summary_text = "📊 Weekly Calorie Burn Report:\n\n"
+        summary_text = "Weekly Calorie Burn Report:\n\n"
         for day, cal in daily_summary.items():
             summary_text += f"{day}: {cal} cal\n"
 
         total = sum(daily_summary.values())
-        summary_text += f"\n🔥 Total This Week: {total} cal"
+        summary_text += f"\n Total This Week: {total} cal"
 
         messagebox.showinfo("Weekly Report", summary_text)

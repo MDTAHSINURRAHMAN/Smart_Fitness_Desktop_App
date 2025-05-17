@@ -21,10 +21,9 @@ import os
 from datetime import datetime
 from tkinter.font import nametofont
 
-# Path to workout data file
 DATA_FILE = "data/workouts.json"
 
-# Ensure directory and file exist
+# Ensure data directory and file exist
 os.makedirs("data", exist_ok=True)
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w") as f:
@@ -36,16 +35,12 @@ class WorkoutScreen:
     """
 
     def __init__(self, parent):
-        """
-        Initialize the workout screen and build the UI.
-        :param parent: The parent window (usually main/root or Toplevel)
-        """
         self.window = tk.Toplevel(parent)
         self.window.title("Workout Tracking")
         self.window.geometry("600x560")
         self.window.resizable(False, False)
 
-        # Apply global font
+        # Set default font
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family="Helvetica", size=11)
 
@@ -53,7 +48,6 @@ class WorkoutScreen:
         form_frame = ttk.Frame(self.window, padding=10)
         form_frame.pack(fill=tk.X)
 
-        # Input fields for exercise, duration, calories
         ttk.Label(form_frame, text="Exercise Type:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
         self.exercise_entry = ttk.Entry(form_frame, width=30)
         self.exercise_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -66,7 +60,6 @@ class WorkoutScreen:
         self.calories_entry = ttk.Entry(form_frame, width=30)
         self.calories_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        # Multiline notes input
         ttk.Label(form_frame, text="Notes:").grid(row=3, column=0, sticky="ne", padx=5, pady=5)
         self.notes_text = tk.Text(
             form_frame,
@@ -80,7 +73,6 @@ class WorkoutScreen:
         )
         self.notes_text.grid(row=3, column=1, padx=5, pady=5)
 
-        # Submit button
         ttk.Button(form_frame, text="Log Workout", command=self.log_workout).grid(row=4, column=1, sticky="e", pady=10)
 
         # === Workout History Table ===
@@ -89,7 +81,6 @@ class WorkoutScreen:
 
         ttk.Label(table_frame, text="Workout History", font=("Helvetica", 12, "bold")).pack(anchor="w", pady=(0, 5))
 
-        # Treeview widget for displaying workout log
         self.tree = ttk.Treeview(
             table_frame,
             columns=("Date", "Type", "Duration", "Calories"),
@@ -108,19 +99,18 @@ class WorkoutScreen:
         button_bottom.pack(pady=10)
         ttk.Button(button_bottom, text="Delete Selected", command=self.delete_selected).pack()
 
-        # Load existing workouts from file
+        # Load workouts into the table
         self.load_workouts()
 
     def log_workout(self):
         """
-        Validate and save new workout entry to JSON file.
+        Save a new workout after validating the fields.
         """
         exercise = self.exercise_entry.get()
         duration = self.duration_entry.get()
         calories = self.calories_entry.get()
         notes = self.notes_text.get("1.0", tk.END).strip()
 
-        # Validate input
         if not exercise or not duration or not calories:
             messagebox.showwarning("Input Error", "Please fill all fields.")
             return
@@ -132,7 +122,6 @@ class WorkoutScreen:
             messagebox.showerror("Invalid Input", "Duration and Calories must be numbers.")
             return
 
-        # Create workout entry
         workout = {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "type": exercise,
@@ -141,7 +130,6 @@ class WorkoutScreen:
             "notes": notes
         }
 
-        # Append workout to file
         with open(DATA_FILE, "r+") as f:
             data = json.load(f)
             data.append(workout)
@@ -155,13 +143,10 @@ class WorkoutScreen:
 
     def load_workouts(self):
         """
-        Load workouts from JSON file and display in Treeview.
+        Load workouts from JSON file and populate the Treeview.
         """
-        # Clear previous data
-        for i in self.tree.get_children():
-            self.tree.delete(i)
+        self.tree.delete(*self.tree.get_children())  # Clear table first
 
-        # Load from file
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
             for workout in data:
@@ -174,29 +159,25 @@ class WorkoutScreen:
 
     def delete_selected(self):
         """
-        Delete the selected workout from both Treeview and JSON file.
+        Delete selected workout from table and file.
         """
         selected = self.tree.selection()
         if not selected:
             messagebox.showwarning("Select", "Select a workout to delete.")
             return
 
-        # Extract values from selected row
         values = self.tree.item(selected[0], "values")
-        date, wtype, duration, calories = values
+        date, wtype, duration, _ = values
 
-        # Filter out matching workout
         with open(DATA_FILE, "r+") as f:
             data = json.load(f)
-            new_data = [
-                w for w in data if not (
-                    w["date"] == date and
-                    w["type"] == wtype and
-                    str(w["duration"]) == duration
-                )
-            ]
+            data = [w for w in data if not (
+                w["date"] == date and
+                w["type"] == wtype and
+                str(w["duration"]) == duration
+            )]
             f.seek(0)
-            json.dump(new_data, f, indent=4)
+            json.dump(data, f, indent=4)
             f.truncate()
 
         messagebox.showinfo("Deleted", "Workout deleted.")
@@ -204,20 +185,26 @@ class WorkoutScreen:
 
     def on_row_double_click(self, event):
         """
-        Show the notes for a workout in a popup when double-clicked in Treeview.
+        Show workout notes in a messagebox on double-click.
         """
-        item = self.tree.selection()[0]
-        values = self.tree.item(item, "values")
+        selected = self.tree.selection()
+        if not selected:
+            return
+
+        values = self.tree.item(selected[0], "values")
+        date, wtype, duration, _ = values
 
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
             for w in data:
-                if (w["date"], w["type"], str(w["duration"])) == (values[0], values[1], values[2]):
-                    messagebox.showinfo("Workout Notes", w.get("notes", "No notes available."))
+                if (w["date"], w["type"], str(w["duration"])) == (date, wtype, str(duration)):
+                    notes = w.get("notes", "No notes available.")
+                    messagebox.showinfo("Workout Notes", notes)
+                    return
 
     def clear_fields(self):
         """
-        Clear all input fields after saving or canceling.
+        Clear all entry fields.
         """
         self.exercise_entry.delete(0, tk.END)
         self.duration_entry.delete(0, tk.END)

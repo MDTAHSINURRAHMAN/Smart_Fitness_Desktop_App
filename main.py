@@ -15,7 +15,6 @@ Date: [YYYY-MM-DD]
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sv_ttk  # Sun Valley modern theme for ttk widgets
 
 # Import individual module screens
 from users import UserScreen
@@ -23,13 +22,13 @@ from workouts import WorkoutScreen
 from goals import GoalScreen
 from nutrition import NutritionScreen
 from reports import ReportScreen
+from tkinter.font import nametofont
 
 class HomeScreen:
     """
     Main GUI window for the Smart Fitness Management System.
 
     Features:
-    - Modern dark theme using sv_ttk
     - Button-based navigation to functional modules
     - Handles runtime errors with popup alerts
     """
@@ -41,8 +40,14 @@ class HomeScreen:
         self.root.title("Smart Fitness Management System")
         self.root.geometry("500x420")
 
-        # Apply Sun Valley theme (can be 'light' or 'dark')
-        sv_ttk.set_theme("dark")
+        # Apply consistent font
+        default_font = nametofont("TkDefaultFont")
+        default_font.configure(family="Helvetica", size=11)
+
+        # Apply basic ttk styling
+        style = ttk.Style()
+        style.configure("TButton", font=("Helvetica", 11), padding=6)
+        style.configure("TLabel", font=("Helvetica", 12))
 
         # Title label for the app
         title_label = ttk.Label(
@@ -77,50 +82,35 @@ class HomeScreen:
     # === Navigation Functions for Module Windows ===
 
     def open_users(self):
-        """
-        Open the User Management screen.
-        """
         try:
             UserScreen(self.root)
         except Exception as e:
             messagebox.showinfo("Error", str(e))
 
     def open_workouts(self):
-        """
-        Open the Workout Tracking screen.
-        """
         try:
             WorkoutScreen(self.root)
         except Exception as e:
             messagebox.showinfo("Error", str(e))
 
     def open_goals(self):
-        """
-        Open the Goal Tracking screen.
-        """
         try:
             GoalScreen(self.root)
         except Exception as e:
             messagebox.showinfo("Error", str(e))
 
     def open_nutrition(self):
-        """
-        Open the Nutrition Tracking screen.
-        """
         try:
             NutritionScreen(self.root)
         except Exception as e:
             messagebox.showinfo("Error", str(e))
 
     def open_reports(self):
-        """
-        Open the Reports and Analytics screen.
-        """
         try:
             ReportScreen(self.root)
         except Exception as e:
             messagebox.showinfo("Error", str(e))
 
-# Entry point check to avoid unintended execution during imports
+# Entry point
 if __name__ == "__main__":
     HomeScreen()

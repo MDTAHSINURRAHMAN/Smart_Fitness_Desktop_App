@@ -1,29 +1,16 @@
-"""
-ReportScreen Module – Smart Fitness Management System
-
-This module generates:
-- A Fitness Report: Summary + Line Chart of daily calories burned
-- A Nutrition Report: Summary + Pie Chart of macronutrient distribution
-
-Uses:
-- workouts.json → for fitness analysis
-- meals.json → for nutrition analysis
-
-Visualized with Matplotlib in embedded Tkinter tabs.
-
-Author: [Your Name]
-Date: [YYYY-MM-DD]
-"""
-
 import tkinter as tk
 from tkinter import ttk
 import json
 import os
 from datetime import datetime, timedelta
+
+
+import matplotlib
+matplotlib.use("Agg")  # Use non-interactive backend
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Paths to JSON data files
 WORKOUTS_FILE = "data/workouts.json"
 MEALS_FILE = "data/meals.json"
 
@@ -35,37 +22,29 @@ for path in [WORKOUTS_FILE, MEALS_FILE]:
             json.dump([], f)
 
 class ReportScreen:
-    """
-    A Tkinter window displaying fitness and nutrition reports using tabbed views.
-    """
-
     def __init__(self, parent):
-        """
-        Initialize the Reports window with two tabs: Fitness and Nutrition.
-        """
         self.window = tk.Toplevel(parent)
         self.window.title("Reports and Analytics")
         self.window.geometry("800x550")
         self.window.resizable(False, False)
 
-        # Create notebook tabs
         notebook = ttk.Notebook(self.window)
         self.fitness_tab = ttk.Frame(notebook, padding=15)
         self.nutrition_tab = ttk.Frame(notebook, padding=15)
+
         notebook.add(self.fitness_tab, text="Fitness Report")
         notebook.add(self.nutrition_tab, text="Nutrition Report")
         notebook.pack(expand=1, fill="both")
+
+        # Always show Fitness Report tab first
+        notebook.select(self.fitness_tab)
 
         self.build_fitness_report()
         self.build_nutrition_report()
 
     def build_fitness_report(self):
-        """
-        Builds the fitness summary: workout count, calories burned, average duration, and a line chart.
-        """
-        ttk.Label(self.fitness_tab, text="📊 Fitness Summary").pack(pady=(0, 10))
+        ttk.Label(self.fitness_tab, text=" Fitness Summary").pack(pady=(0, 10))
 
-        # Summary: total workouts, calories, average duration
         summary_frame = ttk.Frame(self.fitness_tab)
         summary_frame.pack()
 
@@ -86,7 +65,6 @@ class ReportScreen:
             ttk.Label(summary_frame, text=label, width=25).grid(row=i, column=0, sticky="w", padx=5, pady=3)
             ttk.Label(summary_frame, text=str(value)).grid(row=i, column=1, sticky="w", padx=5, pady=3)
 
-        # Display fitness insight based on avg duration
         ttk.Label(self.fitness_tab, text="\nFitness Performance Analysis:").pack()
 
         if avg_duration >= 40:
@@ -100,17 +78,12 @@ class ReportScreen:
 
         ttk.Label(self.fitness_tab, text=summary, wraplength=760, justify="center").pack(padx=10, pady=(0, 10))
 
-        # Show line chart
         self.show_fitness_chart()
 
     def show_fitness_chart(self):
-        """
-        Shows a 7-day line chart of calories burned.
-        """
         with open(WORKOUTS_FILE, "r") as f:
             data = json.load(f)
 
-        # Last 7 days
         today = datetime.today()
         days = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(6, -1, -1)]
         calories_by_day = {day: 0 for day in days}
@@ -119,7 +92,6 @@ class ReportScreen:
             if w["date"] in calories_by_day:
                 calories_by_day[w["date"]] += w.get("calories", 0)
 
-        # Create and embed the line chart
         fig, ax = plt.subplots(figsize=(5.5, 3.2))
         ax.plot(list(calories_by_day.keys()), list(calories_by_day.values()), marker='o', color='tab:blue')
         ax.set_title("Calories Burned - Last 7 Days")
@@ -131,10 +103,7 @@ class ReportScreen:
         canvas.get_tk_widget().pack(pady=5)
 
     def build_nutrition_report(self):
-        """
-        Builds the nutrition summary: total macros and pie chart breakdown.
-        """
-        ttk.Label(self.nutrition_tab, text="📈 Nutrition Summary").pack(pady=(0, 10))
+        ttk.Label(self.nutrition_tab, text=" Nutrition Summary").pack(pady=(0, 10))
 
         summary_frame = ttk.Frame(self.nutrition_tab)
         summary_frame.pack()
@@ -162,9 +131,6 @@ class ReportScreen:
         self.show_nutrition_pie(total_protein, total_carbs, total_fats)
 
     def show_nutrition_pie(self, protein, carbs, fats):
-        """
-        Draws a pie chart of macronutrient breakdown (protein, carbs, fats).
-        """
         fig, ax = plt.subplots(figsize=(4.2, 2.8))
         labels = ['Protein', 'Carbs', 'Fats']
         values = [protein, carbs, fats]

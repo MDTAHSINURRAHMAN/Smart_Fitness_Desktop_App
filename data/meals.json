@@ -1,26 +1,18 @@
 [
     {
-        "date": "2025-05-13",
-        "type": "Lunch",
-        "calories": 600,
-        "protein": 30,
-        "carbs": 70,
-        "fats": 25
+        "date": "2025-05-15",
+        "type": "Breakfast",
+        "calories": 490,
+        "protein": 35,
+        "carbs": 90,
+        "fats": 10
     },
     {
-        "date": "2025-05-13",
-        "type": "Lunch",
-        "calories": 600,
-        "protein": 6,
-        "carbs": 80,
-        "fats": 20
-    },
-    {
-        "date": "2025-05-14",
+        "date": "2025-05-17",
         "type": "Dinner",
-        "calories": 500,
-        "protein": 30,
-        "carbs": 20,
-        "fats": 50
+        "calories": 420,
+        "protein": 70,
+        "carbs": 180,
+        "fats": 35
     }
 ]

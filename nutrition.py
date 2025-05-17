@@ -1,14 +1,14 @@
 """
-NutritionScreen Module – Smart Fitness Management System
+NutritionScreen – Smart Fitness Management System
 
-This module provides a GUI interface for:
-- Logging meals with calorie and macronutrient info
-- Displaying a meal history table
-- Offering simple nutrition tips based on recent intake
+This module allows users to:
+- Log daily meals with calorie and nutrient data
+- Display a table showing meal history
+- Provide simple nutrition tips based on most recent meal
 
-Data is stored in: data/meals.json
+Data file used: data/meals.json
 
-Author: [Your Name]
+Author: Jawad Khan
 Date: [YYYY-MM-DD]
 """
 
@@ -19,52 +19,51 @@ import os
 from datetime import datetime
 from tkinter.font import nametofont
 
-# === File Configuration ===
+# === Ensure meals data file exists ===
 DATA_FILE = "data/meals.json"
 os.makedirs("data", exist_ok=True)
-
-# Create meals.json file if it doesn't exist
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w") as f:
         json.dump([], f)
 
 class NutritionScreen:
     """
-    A GUI screen for tracking meals and nutrition intake.
+    GUI window for logging and reviewing meals and nutrients.
     """
 
     def __init__(self, parent):
         """
-        Initialize the Nutrition Tracking screen and layout.
-        :param parent: Parent window or root
+        Build the meal logging and nutrition tracking window.
+        :param parent: Tkinter root or Toplevel
         """
         self.window = tk.Toplevel(parent)
         self.window.title("Nutrition Tracking")
         self.window.geometry("620x520")
         self.window.resizable(False, False)
 
-        # Apply global font
+        # Apply global font for consistency
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family="Helvetica", size=11)
 
-        # === Header Title ===
+        # === Header ===
         ttk.Label(
             self.window,
             text="Nutrition Tracking & Meal Logging",
             font=("Helvetica", 14, "bold")
         ).pack(pady=10)
 
-        # === Meal Logging Form ===
+        # === Input Form ===
         form_frame = ttk.Frame(self.window, padding=10)
         form_frame.pack(fill=tk.X)
 
-        # Form fields: meal type, calories, protein, carbs, fats
+        # Labels and input fields for meal tracking
         ttk.Label(form_frame, text="Meal Type:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
         ttk.Label(form_frame, text="Calories:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
         ttk.Label(form_frame, text="Protein (g):").grid(row=2, column=0, padx=5, pady=5, sticky="e")
         ttk.Label(form_frame, text="Carbs (g):").grid(row=3, column=0, padx=5, pady=5, sticky="e")
         ttk.Label(form_frame, text="Fats (g):").grid(row=4, column=0, padx=5, pady=5, sticky="e")
 
+        # Input fields
         self.meal_type = ttk.Combobox(form_frame, values=["Breakfast", "Lunch", "Dinner", "Snack"], state="readonly")
         self.meal_type.grid(row=0, column=1, padx=5, pady=5)
 
@@ -80,14 +79,14 @@ class NutritionScreen:
         self.fats_entry = ttk.Entry(form_frame)
         self.fats_entry.grid(row=4, column=1, padx=5, pady=5)
 
-        # === Action Buttons ===
+        # === Buttons ===
         button_frame = ttk.Frame(self.window, padding=(10, 0))
         button_frame.pack(fill=tk.X)
 
         ttk.Button(button_frame, text="Log Meal", command=self.log_meal).pack(side="right", padx=10, pady=10)
         ttk.Button(button_frame, text="Get Nutrition Tip", command=self.show_tip).pack(side="left", padx=10, pady=10)
 
-        # === Table Header ===
+        # === Table Label ===
         ttk.Label(self.window, text="Meal History", font=("Helvetica", 12, "bold")).pack(anchor="w", padx=15)
 
         # === Table Display ===
@@ -107,37 +106,36 @@ class NutritionScreen:
 
         self.tree.pack(fill=tk.BOTH, expand=True)
 
-        # Load saved meals into table
+        # Load meals from JSON file on start
         self.load_meals()
 
     def log_meal(self):
         """
-        Log a new meal entry from form input and save to meals.json.
+        Save a meal to JSON file using form data.
         """
         try:
             meal = self.meal_type.get()
             cal = int(self.calories_entry.get())
-            p = int(self.protein_entry.get())
-            c = int(self.carbs_entry.get())
-            f = int(self.fats_entry.get())
+            protein = int(self.protein_entry.get())
+            carbs = int(self.carbs_entry.get())
+            fats = int(self.fats_entry.get())
         except ValueError:
-            messagebox.showerror("Invalid", "Please enter numeric values.")
+            messagebox.showerror("Invalid Input", "Please enter only numeric values.")
             return
 
         if not meal:
-            messagebox.showwarning("Missing", "Select a meal type.")
+            messagebox.showwarning("Missing Field", "Please select a meal type.")
             return
 
         meal_data = {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "type": meal,
             "calories": cal,
-            "protein": p,
-            "carbs": c,
-            "fats": f
+            "protein": protein,
+            "carbs": carbs,
+            "fats": fats
         }
 
-        # Save new meal to JSON file
         with open(DATA_FILE, "r+") as f:
             data = json.load(f)
             data.append(meal_data)
@@ -145,29 +143,27 @@ class NutritionScreen:
             json.dump(data, f, indent=4)
             f.truncate()
 
-        messagebox.showinfo("Logged", "Meal saved.")
+        messagebox.showinfo("Logged", "Meal has been saved successfully.")
         self.clear_fields()
         self.load_meals()
 
     def load_meals(self):
         """
-        Reload meal data from JSON and refresh the table view.
+        Load meal data and refresh the table view.
         """
-        # Clear existing table rows
-        for i in self.tree.get_children():
-            self.tree.delete(i)
+        for row in self.tree.get_children():
+            self.tree.delete(row)
 
-        # Load data and insert into table
         with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-            for m in data:
+            meals = json.load(f)
+            for m in meals:
                 self.tree.insert("", tk.END, values=(
                     m["date"], m["type"], m["calories"], m["protein"], m["carbs"], m["fats"]
                 ))
 
     def clear_fields(self):
         """
-        Clear all input fields after submission.
+        Reset all input fields.
         """
         self.meal_type.set("")
         self.calories_entry.delete(0, tk.END)
@@ -177,7 +173,7 @@ class NutritionScreen:
 
     def show_tip(self):
         """
-        Generate a basic nutrition tip based on the last meal entry.
+        Show a nutrition tip based on the last meal entry.
         """
         try:
             with open(DATA_FILE, "r") as f:
@@ -186,26 +182,22 @@ class NutritionScreen:
             data = []
 
         if not data:
-            messagebox.showinfo("Tip", "Log some meals to get personalized tips.")
+            messagebox.showinfo("Tip", "Log a meal to receive personalized nutrition advice.")
             return
 
         latest = data[-1]
-        cal = latest["calories"]
-        protein = latest["protein"]
-        carbs = latest["carbs"]
-        fats = latest["fats"]
-
         tips = []
 
-        if protein < 10:
-            tips.append("Add more protein (e.g. eggs, chicken, tofu) to support muscle repair.")
-        if carbs > 100:
-            tips.append("High carb alert! Consider cutting down on sugar-heavy or starchy meals.")
-        if fats > 40:
-            tips.append("Fat intake is high. Try more lean meals or salads.")
-        if cal > 700:
-            tips.append("That was a heavy meal! Balance with lighter meals today.")
+        if latest["protein"] < 10:
+            tips.append("Add more protein (e.g. eggs, chicken, tofu).")
+        if latest["carbs"] > 100:
+            tips.append("Too many carbs! Reduce sugar and starchy foods.")
+        if latest["fats"] > 40:
+            tips.append("High fat detected. Choose leaner meals.")
+        if latest["calories"] > 700:
+            tips.append("That meal was heavy. Consider balancing with a lighter one.")
+
         if not tips:
-            tips.append("Balanced intake! Keep up the good work!")
+            tips.append("Your meal looks balanced. Keep it up!")
 
         messagebox.showinfo("Nutrition Tip", "\n\n".join(tips))
